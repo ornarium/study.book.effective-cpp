@@ -1,0 +1,132 @@
+item10. operator new를 작성한다면, operator delete도 작성한다
+
+operator new, delete 기본 버전들은 일반적인 목적을 위해
+적합. 필연적으로 성능개선의 여지를 남기고 있음.
+
+operator new가 operator delete에게 할당한 메모리의 크기를 알려주기 위한
+방법은 반환할 메모리의 할당된 블록의 크기를 나타내는 추가적 정보를
+붙이는 것이다. 작은 객체들의 경우(클래스가 어떠한 가상함수도 포함하지
+않는다면) 이런 추가적인 정보로 인해 요구된 메모리양보다 두 배 이상이 될
+수도 있다.
+
+한 가지 방법은 기본 operator new에게 큰 메모리를 할당하게 하고,
+메모리풀을 만드는 것. 그러면 추가적인 정보는 한번만 유지하면 된다
+
+class Object {
+public:
+	static void* operator new(size_t size);
+	...
+private:
+
+	union {
+	      ObjectRep * rep; //사용중인 객체들을 위함
+	      Object * next; //여유 리스트 상의 객체들을 위함
+	};
+	
+	//메모리 풀 최대 갯수
+	static const int BLOCK_SIZE;
+
+	static Object *headOfFreeList;
+};
+
+//헤더 파일이 아닌 구현 파일에 들어감
+Object* Object::headOfFreeList;
+const int Object::BLOCK_SIZE = 512;
+
+void* Object::operator new(size_t size) {
+      if(size != sizeof(Airplane))
+      	      return ::operator new(size);
+
+      Object* p = headOfFreeList;
+
+      if(p)
+	headOfFreeList = p->next;
+      else {
+      	//여유 리스트가 비어있음. 충분한 메모리 블럭을 할당
+	Object* block = static_cast<Object*>(::operator new(BLOCK_SIZE
+	* sizeof(Object)));
+
+	//메모리 조각들을 다 같이 링크해서 새로운 여유 리스트를 구성
+	//0번째 항목은 operator new의 호출자에게 반환하기 위해 건너뜀
+	for(int i = 1; i < BLOCK_SIZE-1; ++i)
+		newBlock[i].next = &newBlock[i+1];
+
+	//널 포인터로 링크드 리스트를 종료
+	block[BLOCK_SIZE-1].next = 0;
+
+	//p를 리스트의 맨앞으로, headOfFreeList를 바로 그 다음의
+	조각으로 세팅
+	p = block;
+	headOfFreeList = &block[1];
+      }
+   return p;
+}
+
+
+operator new에 맞게 operator delete 역시 필요하다
+
+class Object {
+public:
+	...
+	static void operator delete(void* deadObject, size_t size);
+};
+
+//operator delete는 메모리 조각으로 전달됨.
+// 크기가 올바르면 여유 리스트의 맨 앞으로 추가만 됨
+void Object::operator delete(void* deadObject, size_t size) {
+      if(deadObject == 0) return;
+
+      if(size != sizeof(Object)) {
+      	      ::operator delete(deadObject);
+	      return;
+      }
+      Object* carcass = static_cast<Object*>(deadObject);
+
+      //메모리 해제가 되지 않고 여유 리스트에 추가되므로
+      // 메모리 유출이 일어나지 않는다
+      carcass->next = headOfFreeList;
+      headOfFreeList = carcass;
+}      
+
+operator delete에게 전달한 size_t값은 삭제될 객체가 가상 소멸자를
+가지고 있지 않는 선조 클래스로부터 유도되었다면, 옳지 않을 수도 있음.
+항목 14참조
+
+아래는 재사용성을 위한 Pool 인터페이스.
+Pool객체가 소멸될때 할당된 메모리가 해제됨으로써, Object로 만든 Pool의
+(정확한 의미의 메모리 해제를 할수 없었던) 단점을 해결하지만, 이 Pool을
+사용하는 객체보다 빨리 해제되게 된다면, 결과를 예측할 수가 없음
+
+class Pool {
+public:
+	Pool(size_t n);
+	//한 개의 객체를 위해 충분한 메모리 할당
+	void* alloc(size_t n); 
+	//p에 의해 가리켜진 메모리를 풀로 반환
+	void free(void* p, size_t n);
+	//Pool내의 메모리 해제
+	~Pool();
+};
+
+class Object {
+public:
+	... //일반적인 함수들
+	static void* operator new(size_t size);
+	static void operator delete(void* p, size_t size);
+private:
+	ObjectRep* rep;
+	static Pool memPool;
+};
+inline void * Object::operator new(size_t size) {
+       return memPool.alloc(size);
+}
+inline void Object::operator delete(void* p, size_t size) {
+       memPool.free(p, size);
+}
+
+//Object 메모리풀 생성. 이 부분은 클래스 구현에 들어가야함.
+Pool Object::memPool(sizeof(Object));
+
+
+※어쨌든 요점은 operator new와 operator delete가 함께 동작할 필요가
+있으니, operator new를 작성하려거든 operator delete도 작성하라는 것.

@@ -1,0 +1,76 @@
+item14. 베이스 클래스에서 소멸자는 가상 함수로 선언해야 한다.
+
+C++ 언어 표준은 이 항목에 대해서 명확하지 않음. Base클래스에서 가상
+소멸자를 가지고 있지 않은데, Base Class의 Pointer에 할당된 Sub Class를
+삭제하려는 경우, 정의되어 있지 않다.
+
+이 문제를 피하기 위해서는 Base Class의 소멸자를 virtual로 선언해야
+한다. 가상 함수의 목적은 계승된 클래스에서의 동작을
+커스터마이즈(customize)하기 위한 것이다(항목 36)
+
+어떤 클래스가 베이스 클래스로 사용되기 위한 것이 아니라면, 소멸자를
+가상함수로 선언하는 것은 대개 좋은 생각이 아님
+
+class Point {
+public:
+	Point(short int xCoord, short int yCoord);
+	~Point();
+private:
+	short int x, y;
+};
+
+short int 가 16비트라면 Point 객체는 32비트 레지스터에 들어갈수
+있다. 게다가 C나 파스칼등 다른 언어의 함수에 넘겨질수 있다.  하지만,
+가상함수를 구현하는 것은 컴파일러가 객체에 추가적인 정보(vptr; virtual
+table pointer)를 추가하며, 가상 함수가 호출될때에는 이 vptr로
+vtbl(virtual table)을 참조하여 결정하는데, 이 vptr이 32비트이므로,
+2배의 크기를 가지는데다, 다른 언어에서는 vptr이 없으므로 호환도 되지
+않는다.
+
+가상 함수가 하나도 없는 경우에 가상 함수가 아닌 소멸자로 인해 문제를
+겪을 수도 있다.
+
+template <class T>
+class Array {
+public:
+	Array(int lowBound, int highBound);
+	~Array();
+	...
+};
+
+template<class T>
+class NamedArray: public Array<T> {
+public:
+	NamedArray(int lowBound, int highBound, const string& name);
+private:
+	string arrayName;
+};
+
+NamedArray<int> * pna = new NamedArray<int>(10, 20, "Impending Doom");
+Array<int> * pa = pna; //NamedArray<int>* -> Array<int>*
+...
+delete pa; //실제로, pa->arrayName은 누수될 것이다. *pa의 NamedArray는
+           //절대로 소멸되지 않기 때문
+
+기존 기능중 어떤 것도 재정의 하지 않았음에도, 가상 함수가 아닌 소멸자가
+문제를 일으킨다. 기능에 아무 고침없이 새로운 것을 추가하고자 하는
+것이기 때문에, 이런 상황은 굉장히 자주 발생한다.
+
+베이스 클래스를 추상 클래스가 되었으면 하고 바랄때, 소멸자를 순수 가상
+함수로 선언하게 되면 추상클래스가 된다.
+
+class AMOV {
+public:
+	virtual ~AMOV() = 0;
+};
+
+가상 소멸자를 가지고 있으므로 소멸자 문제에 대해 걱정하지 않아도
+되지만, 반드시 순수 가상 소멸자의 정의를 제공해야 한다. 추상 클래스라
+하더라도 ~AMOV()를 컴파일러가 호출하기 때문... 정의가 안되어 있으면
+링커에서 에러 발생. 가상 소멸자의 동작 방식상, 계승된 클래스가 호출되고
+Base클래스가 호출.
+
+AMOV::~AMOV() {}
+
+
+

@@ -1,0 +1,63 @@
+item9. new 의 정상 형식을 감추지 않는다.
+
+클래스 내부에 operator new라는 함수를 정의함으로써 new의 정상형식의
+사용할 막아버림.
+
+class X {
+public:
+	void f();
+
+	//new 핸들링 함수의 사용을 만족하는 연산자 new
+	static void * operator new(size_t size, new_handler p);
+};
+
+//정의는 어디서나 가능
+void specialErrorHandler();
+
+//X::operator new를 호출
+X* px1 = new (SpecialErrorHandler) X;
+
+//에러!
+X* px2 = new X;
+
+
+한가지 해법은 클래스별 고유 new를 작성하는 것
+
+class X {
+public:
+	void f();
+
+	//new 핸들링 함수의 사용을 만족하는 연산자 new
+	static void * operator new(size_t size, new_handler p);
+	static void * operator new(size_t size) {
+	       return ::operator new(size);
+       }
+};
+
+//정의는 어디서나 가능
+void specialErrorHandler();
+
+//X::operator new(size_t size, new_handler) 를 호출
+X* px1 = new (SpecialErrorHandler) X;
+
+//X::operator new(size_t)를 호출
+X* px2 = new X;
+
+다른 방법은 기본 인자값을 제공.
+
+class X {
+public:
+	void f();
+
+	//new 핸들링 함수의 사용을 만족하는 연산자 new
+	static void * operator new(size_t size, new_handler p = 0);
+};
+
+//정의는 어디서나 가능
+void specialErrorHandler();
+
+//X::operator new(size_t size, new_handler) 를 호출
+X* px1 = new (SpecialErrorHandler) X;
+
+//양호
+X* px2 = new X;

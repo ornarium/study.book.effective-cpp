@@ -1,0 +1,41 @@
+item7. 메모리가 모자랄 경우에 대비한다.
+
+operator new 가 요구된 메모리를 할당할수 없을때 예외를
+발생시킨다(예전의 컴파일러는 0을 반환하였다)
+
+#define NEW(ptr, TYPE) \
+try{ (PTR) = new TYPE; } \
+catch( std::bad_alloc) { assert(0); }
+
+c의 방식대로라면 전처리기를 사용할 수도 있다. std::bad_alloc는
+operator new가 메모리 할당 요구를 만족시킬 수 없을때 발생하는
+예외. assert는 c로는 <assert.h> c++는 <cassert> 에 있으며 단순 0이면
+에러메시지와 abort호출.
+
+하지만, 위와 같은 전처리구문은 c++에서는 너무 단순화되어 있어서 실제로
+쓰기에는 조금 모자라게 됨.
+
+메모리가 모자라는 경우를 처리하는 함수를 지정하기 위해 클라이언트는
+set_new_handler를 호출.
+
+typedef void (*new_handler) ();
+new_handler set_new_handler(new_handler p) throw();
+
+잘 정의된 new 핸들러 함수는 다음 중 한가지를 실행해야 함
+1. 좀더 많은 메모리 확보
+2. 다른 new 핸들러 설치
+3. new 핸들러를 무용지물로 만듬
+4. std::bad_alloc또는 std::bad_alloc를 상속받는 타입의 예외 발생
+5. abort나 exit 호출
+
+c++표준 위원회는 기존의 제로 테스트(test-for-0)기반을 버리는것을 원하지
+않았다. 그래서 0을 반환하는 동작을 유지하는 nothrow 키워드를 지원한다.
+
+class Widget {...};
+Widget* pw1 = new Widget; //할당 실패시 std::bad_alloc 던져짐
+
+if(pw1 == 0) ... //이 테스트는 실행 안됨
+
+Widget* pw2 = new (nothrow) Widget; //할당 실패시 0을 반환
+
+if(pw2 == 0) ... //이 테스트는 수행될수 있음

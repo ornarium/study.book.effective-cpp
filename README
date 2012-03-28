@@ -1,0 +1,40 @@
+* 특정 itemNN.txt없는 것은, (간단해서)굳이 메모할 필요가 없었기 때문
+
+c에서 c++로의 전환
+item1. #define보다는 const와 inline을 사용한다
+item2. <stdio.h>보다는 <iostream>을 사용한다
+item3. malloc과 free보다는 new, delete를 사용한다
+item4. c++스타일의 주석을 지향한다.
+
+메모리관리
+item5. new와 delete사용시 동일한 형식을 이용한다.
+item6. 소멸자에서 포인터 멤버에 대해 delete를 이용한다.
+item7. 메모리가 모자랄 경우에 대비한다.
+item8. operator new와 operator delete작성시 관례를 따른다
+item9. new 의 정상 형식을 감추지 않는다.
+item10. operator new를 작성한다면, operator delete도 작성한다
+
+생성자, 소멸자, 그리고 치환 연산자
+item11. 동적으로 할당되는 메모리를 갖는 클래스를 위해서는 복사생성자와 치환 연산자를 선언하라.
+item12. 생성자에서 치환보다는 초기화를 사용한다.
+item13. 클래스에 선언되 순서에 따라 멤버 초기화 리스트에 멤버들을 나열한다
+item14. 베이스 클래스에서 소멸자는 가상 함수로 선언해야 한다.
+item15. operator=이 *this에 대한 레퍼런스(reference)를 리턴(return)하도록 한다
+item16. operator=에서 모든 데이터 멤버들로의 치환을 수행한다
+item17. operator=에서 재귀치환을 검사
+
+클래스와 함수: 설계 및 선언
+item18.
+item19.
+item20.
+
+클래스와 함수: 구현
+item29.
+
+인스턴스와 객체지향 설계
+item35. public계승이 "isa"를 모델링하도록 하라
+
+미묘한 부분
+item45. c++가 은밀하게 어떤 함수를 만들어 주고 호출하는지 이해하기
+
+item50. c++에 대한 이해를 넓혀라

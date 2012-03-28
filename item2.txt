@@ -1,0 +1,21 @@
+item2. <stdio.h>보다는 <iostream>을 사용한다
+scanf와 printf는 타입 안정성과 확장성이 없다. 그리고 읽고 쓰기위한
+변수들을 읽고 쓰기를 제어하는 포맷 정보로부터 분리시킨다
+
+class Rational {
+public:
+	Rational(int numerator = 0, int denominator = 1);
+	//생략
+
+private:
+	int n, d;
+	friend ostream& operator<<(ostream& s, const Rational& r);
+};
+
+ostream& operator<<(ostream& s, const Rational& r) {
+	 s << r.n << '/' << r.d;
+	 return s;
+}
+
+1. operator<<는 멤버함수가 아니다
+2. Rational 객체는 객체가 아닌 상수레퍼런스로 operator<<에 전달된다

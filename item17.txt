@@ -1,0 +1,40 @@
+item17. operator=에서 재귀치환을 검사
+
+재귀치환에 해당하는 별명(에일리어싱)과 객체 일치 문제는 operator=에
+국한 되지 않고, 객체 레퍼런스와 객체 포인터를 사용하는 모든 함수에
+해당한다
+
+class Base {
+      void mf1(Base& rb); //*this와 rb가 동일할 수 있음
+      void mf2(Base& rb); //*this와 rb가 동일할 수 있음
+}
+void f1(Base& rb1, Base& rb2); //rb1과 rb2가 동일할 수 있음
+
+재귀치환에 대해 특별한 주의를 가지는데에는 2가지가 있다
+1. 효율성. 같을 경우, 치환작업을 안해도 된다
+2. 정확함. 새로운 리소스를 할당하기 전에 해제작업을 진행하므로, 해제를
+막을 수 있다
+
+재귀 치환을 막는 방법에는 2가지 정도가 있는데,
+1. 객체가 같은 메모리를 점유하는지를 체크하지 않고,
+같은 값을 갖고 있는지를 검사한다.
+String& String::operator=(const String& rhs) {
+   if(strcmp(data, rhs.data) == 0)
+       return *this;
+}
+
+operator==가 있는 일반 클래스 C의 치환 연산자
+C& C::operator=(const C& rhs) {
+   //재귀치환검사
+   if(*this == rhs) //operator==로 검사
+   return *this;
+}
+
+2. 메모리내 주소로 객체 일치를 검사.
+C& C::operator=(const C& rhs) {
+   if(this == &rhs)
+      rutrn *this;
+}
+
+보다 복잡한 방법은 Hash등을 이용한 객체 식별자를 반환하여 operator==로
+비교하게 하는 것.

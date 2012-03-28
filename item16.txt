@@ -1,0 +1,69 @@
+item16. operator=에서 모든 데이터 멤버들로의 치환을 수행한다
+
+치환은 기본 치환 연산자를 사용하고, 치환 과정의 특정 부분만을
+치환시키고 싶을때가 있으나, 그런것은 C++에 없다. 모든것을 직접 작성해야
+한다.
+
+template<class T>
+NamedPtr<T>& NamedPtr<T>::operator=(const NamedPtr<T>& rhs) {
+    if(this == &rhs)
+        return &rhs;
+
+    //모든 데이터 멤버로 치환한다
+    name = rhs.name;
+    *ptr = *rhs.ptr; //포인터의 값을 치환
+    return *this;
+}
+
+하지만 골때르는 것은 상속받았을 때인데, 해결 방법은 Derived Class는
+Super Class로 접근하지 못하기 때문에(private 변수) 명시적 치환을 한다.
+
+Derived& Derived:operator=(const Derived& rhs) {
+    if(this == &rhs)
+        return *this;
+
+    Base::operator=(rhs); //this->Base::operator= 호출
+    y = rhs.y;
+    
+    return *this;
+}
+
+어떤 컴파일러는 Super Class의 치환연산자가 컴파일러에 의해 생성될
+경우, 호출을 거부하는(컴파일 에러) 경우가 있단다. 그러면 아래와 같이 처리.
+
+Derived& Derived:operator=(const Derived& rhs) {
+    if(this == &rhs)
+        return *this;
+
+    static_cast<Base&>(*this) = rhs; //*this의 Base부분의 operator=를 호출
+    y = rhs.y;
+    
+    return *this;
+}
+
+※ *this가 Base&로 캐스트되고, 그 결과에 치환을 수행한다. Derived의
+객체의 Base부분으로만 치환을 수행. Base&가 아닌 Base로 *this를
+캐스트한다면, Base복사생성자를 호출하게 되어, 새로운 객체가 치환되고,
+*this는 바뀌지 않을 것.
+
+이 문제와 더불어 Derived Class의 복사 생성자를 구현할때도 주의를
+기울여야 함
+
+class Derived: public Base {
+public:
+    Derived(int initialValue)
+    : Base(initialvalue), y(initialvalue) {}
+    Derived(const Derived& rhs) //잘못된 복사 생성자
+    : y(rhs.y) {}
+    ....
+};
+
+Derived객체가 복사 생성될때, Base부분이 생성되긴 하나, 디폴트 생성자로
+생성이 되기 때문에  값은 복사되지 않고, 항상 초기화된 상태.
+
+Derived(const Derived& rhs)
+: Base(rhs), y(rhs.y) {}
+
+위와 같이 변경
+
+

@@ -1,0 +1,81 @@
+item8. operator new와 operator delete작성시 관례를 따른다
+
+operator new를 직접 작성해야만 할때 기본 operator new와 일치하는 동작을
+제공한다는 것이 중요(delete 마찬가지). new 핸들러 함수를 지원하고
+크기가 0인 요구들을 올바로 처리할 수 있으면 거의 끝났다고 볼수 있음.
+
+// 멤버 변수가 아닌 operator new
+// operator new는 이밖에도 추가적인 인자를 취할 수 있음
+void* operator new(size_t size) {
+
+      // 0바이트 요구를 1바이트 요구로 처리함
+      if(size == 0) {
+      	      size = 1;
+      }
+
+      //메모리가 성공적으로 할당되거나 핸들링함수가 실행되어야지만
+      //루프를 빠져 나감
+      while(1) {
+            size 바이트를 할당시도;
+
+	    if(할당에 성공하면)
+	       	return (메모리에 대한 포인터);
+		
+	    //할당실패, 현재 에러 처리 함수가 무엇인지를 찾음
+	    new_handler globalHandler = set_new_handler(0);
+      	    set_new_handler(globalHandler);
+
+      	    if(globalHandler)
+	    	(*globalHandler)();
+	    else
+	    	throw std::bad_alloc();
+	}
+}
+
+operator new에 관해 깨닫지 못하는 것 중 하나가 하부 클래스로 그것이
+상속된다는 것. 클래스마다 고유한 대부분의 operator new버전은 특정
+클래스를 위해 설계된 것이지 다른 (하부) 클래스를위해 설계된 것이
+아니다
+
+void* Base::operator new(size_t size) {
+      //size가 잘못 되었으면, 표준 연산자를 사용하여 요구 처리
+      if(size != sizeof(Base))
+      	      return ::operator new(size);
+
+       ....//요구 처리
+}
+
+operator delete를 위한 의사 코드
+
+//멤버가 아닌 operator delete를 위한 의사코드
+void operator delete(void* rawMemory) {
+     if(rawMemory == 0)
+     		  return;
+     rawMemory에 의해 가리켜진 메모리를 해제;
+     return;
+}
+
+//멤버버전
+// operator new와 같이 잘못된 크기의 삭제 요구들은 ::operator delete로 전달
+class Base {
+public:
+	static void * operator new(size_t size);
+	static void operator delete(void* rawMemory, size_t size);
+	...
+}
+
+void Base::operator delete(void* rawMemory, size_t size) {
+     //nil pointer인지 검사
+     if(rawMemomry == 0)
+     		   return;
+
+     //size가 잘못되었으면 표준 연산자 delete요구 처리
+     if(size != sizeof(Base)) {
+     	     ::operator delete(rawMemory);
+     	     return;
+     }
+
+     rawMemory가 가리키고 있는 메모리 해제;
+
+     return;
+}

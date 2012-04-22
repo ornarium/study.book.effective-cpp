@@ -1,0 +1,27 @@
+item45. c++가 은밀하게 어떤 함수를 만들어 주고 호출하는지 이해하기
+
+class Empty {};
+
+는 아래와 동일하다.
+
+class Empty{
+public:
+  Empty(); //디폴트 생성자
+  Empty(const Empty& rhs); //복사 생성자
+  ~Empty(); //소멸자-왜 가상함수가 되어야 하는지는 아래를 참조
+
+  Empty& operator(const Empty& rhs); //할당함수
+  Empty* operator(); //주소 변환 연산자
+
+  const Empty* operator&() const;
+};
+
+그러나 무조건 생성되는 것은 아니고, 기본 함수들은 필요한 경우에만
+생성.
+
+const Empty e1; //디폴트 생성자, 소멸자
+Empty e2(e1); // 복사 생성자
+e2 = e1;
+Empty *pe2 = &e2; //주소 변환 연산자(비상수)
+const Empty *pe1 = &e1; //주소 변환 연산자(상수)
+

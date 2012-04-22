@@ -1,0 +1,26 @@
+item38. 계승된 기본 인자값을 재정의하지 않도록 한다.
+
+기본 인자는 함수의 일부분으로서만 존재할수 있는데, 비가상 함수는 재정의
+하는것이 옳지 않으므로, 부재 인자를 갖는 가상 함수를 재정의하는 것으로
+국한됨. 가상함수는 구현만을 재정의 가능하므로, 그렇게 되었을때
+정적인자는 변경가능한 사항이 아님(컴파일이 되더라도)
+
+즉, 계승된 클래스에서 가상함수를 호출하는 것은 베이스 클래스의
+기본인자를 사용하는 결과를 낳는다는 것을 의미. 베이스 클래스의
+기본인자와 계승된 클래스의 함수를 사용한 예상치 못한 동작으로 이어짐.
+
+※C++에서 기본 인자값 재정의가 정적으로 되는 것은 속도 측면에서
+고의적으로 맞춰진 사항
+
+class Shape {
+public:
+  virtual void draw(ShapeColor color = RED) const = 0;
+};
+class Rectangle: public Shape {
+public:
+  virtual void draw(ShapeColor color = GREEN) const;
+};
+
+Shape * ps = new Rectangle;
+ps->draw(BLACK); //Rectangle::draw(BLACK); 호출
+ps->draw(); //Rectangle::draw(RED); 호출

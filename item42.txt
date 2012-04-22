@@ -1,0 +1,59 @@
+item42. private계승을 바르게 사용하라.
+
+1. private계승은 파생클래스를 베이스 클래스로 변환하지 않을것
+class Student: private Person {...};
+Person p;
+Student s;
+dance(p); //성공
+dance(s); //에러. s는 Person이 아니다.
+2. private베이스클래스의 멤버들은 private멤버가 됨.
+- 동작원리도 마찬가지
+
+
+※ private계승은 “사용하여 구현된” 을 의미. D객체가 B객체를 사용하여
+구현된다는 것을 의미할뿐 그 이상의 의미는 없음. private계승은
+소프트웨어 디자인을 하는 동안이 아니라 소프트웨어 구현을 하는 동안에만
+의미.
+
+※ 항목40의 레이어링과 private계승 중에서 어떤 것을 선택할 것인가?
+protected 멤버나 가상 함수가 나타날때 private 계승을 사용. private
+계승은 protected멤버가 있을때 “사용하여 구현된”을 표현할수 있는
+방법. 일반적인 경우엔 레이어링이 좀더 바람직한 방법.
+
+※ 레이어링보다 private계승이 낫게 느껴질때는 해당 class가 일반적으로
+직접 사용되기보다 다른 클래스를 구현하는데에만 사용할수 있다고 느껴질때
+
+class GenericStack {
+protected:
+  GenericStack();
+  ~GenericStack();
+
+  void push(const void * object);
+  void * pop();
+
+  bool empty() const;
+private:
+  struct StackNode {
+    void * data;
+    StackNode * next
+
+    StackNode(void * newData, StackNode * nextNode)
+    : data(newData), next(nextNode) {}
+  };
+  StackNode * top;
+};
+
+template<class T>
+class Stack: private GenericStack {
+public:
+  void push(T * objectPtr) {GenericStack::push(objectPtr);}
+  T * pop() {return static_cast<T*> (GenericStack::pop());}
+  bool empty() const {return GenericStack::empty();}
+};
+
+레이어링을 사용해서는 위와 같은 것을 완성할 수 없다. 오직 계승을
+통해서만 protected멤버에 대해 접근 가능하며, 가상 함수가 재정의 될수
+있도록 함
+
+※가상함수를 사용하는 것으로 인해 private계승이 필요하게 되는 것은
+항목 44를 참고

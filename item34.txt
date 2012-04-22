@@ -1,0 +1,74 @@
+item34. 파일간의 컴파일 의존성(dependency)을 최소화하라.
+
+C++는 구현과 인터페이스 정의를 분리하는 일을 훌륭하게 하지 못함.
+
+컴파일 의존성은 include를 통해서 생김.
+
+분리의 포인트는 클래스 정의와 클래스 선언에 대한 의존성을 바꿈. 가능
+하면 헤더파일(클래스 선언에만 의존) 자체만으로 충분하게 만듦. 이 것은
+3가지를 의미를 내포함.
+
+1. 객체 레퍼런스나 포인터로 대체하라
+2. 클래스 선언을 사용해라.
+- 함수 선언시 클래스가 반환값, 인자등은 클래스 정의가 필요치 않아
+선언만 사용해도 됨.
+3. 컴파일이 안되는 경우에만 include하라
+
+//대안 1 Handle Class와 Body Class로 나눔
+
+//컴파일러는 Person생성자 때문에 이 클래스 이름을 알아야 함
+class string; //실제 class선언은 항목 49
+class Date;
+class Address;
+class Country;
+
+//PersonImpl클래스는 Person실제 구현 포함
+//클래스이름에 대한 전방선언
+class PersonImpl;
+
+class Person {
+public:
+  Person(const string& name, const Date& birthday,
+    const Address& addr, const Country& country);
+  virtual ~Person();
+  ...
+  string name() const;
+  string birthday() const;
+  string address() const;
+  string nationality() const;
+private:
+  PersonImpl * impl; //구현에 대한 포인터
+};
+
+//Person.cpp
+
+#include "Person.h" //Person클래스를 구현
+#include "PersonImpl.h" //멤버함수를 호출해야 하므로, 정의를 해야한다.
+
+Person::Person(const string& name, const Date& birthday,
+		     const Address& addr, const Country& country) {
+  impl = new PersonImpl(name, birthday, addr, country);
+}
+
+string Person::name() const {
+  return impl->name();
+}
+
+//대안 2 - Protocol Class 구현
+//Interface로 선언
+class Person {
+public:
+  virtual ~Person();
+
+  virtual string name() const = 0;
+  virtual string birthDate() const = 0;
+  virtual string address() const = 0;
+  virtual string nationality() const = 0;
+};
+
+//makePerson은 Person지원하는 객체를  생성.
+//이것을 Person에 static로 선언하거나, 멤버함수로 선언하는 방법도 있다.
+Person * makePerson(const string& name,
+       const Date& birthday,
+       const Address& addr,
+       const Country& country);

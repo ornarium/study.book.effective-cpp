@@ -1,0 +1,42 @@
+item21. 가능한 const를 이용한다.
+
+함수 반환을 상수값으로 하면 안정성과 효율성은 높이고 에러율은 낮출수
+있음(항목 29)
+
+const Rational operator*(const rational& lhs, const Rational& rhs);
+
+Rational a, b, c;
+...
+(a * b) = c; //a * b의 곱으로 치환
+
+좋은 사용자 정의 타입의 조건들 중 하나는 내부 타입과의 이유없는
+동작상의 비호환성을 피하는 것이면 치환을 허용할 이유가 없음.
+
+const 멤버함수는 비트 단위의 상수성(bitwise constness)와 개념적
+상수성(conceptual constness) 2가지 견해 있음.
+
+1. 비트단위 상수성은 멤버함수가 어떤 객체의 데이터 멤버도 변경시키지
+않는 경우(static 제외). 비트단위 상수성은 위반 사항을 검출하기 용이.
+C++의 상수성 정의. const멤버함수는 어떤 멤버도 변경 불가능.
+
+2. 개념적 상수성. const멤버함수에서 객체의 일부 비트들을 변경할수 있는
+경우(클라이언트에 의해 검출될수 없는 방식으로만) mutable 키워드를
+사용하여 비트단위 상수성의 제약을 풀어냄.
+
+※비트단위 상수성을 벗겨내는 trick
+그러나 올바른 동작을 할지는 의문. this가 가리키는 객체가 const라면
+상수성을 버린 결과는 예측할수 없음.
+
+unsigned int NObj::length() const {
+  //this의 로컬 버전을 만듦. 여기서 this는 const포인터가 아님
+  NObj * const localThis =
+    const_cast<String * const>(this);
+
+  localThis->dataLength = strlen(data);
+  localThis->lengthIsValid = true;
+}
+
+함수가 인자가 가리키고 있는 것(상수성)을 변경하지 않는다면 안전함.
+
+const char * str = "AOEUAOEU";
+size_t length = strlen(const_cast<char*>(str));

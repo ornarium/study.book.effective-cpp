@@ -1,0 +1,62 @@
+item19. 멤버 함수, 비멤버 함수 및 프렌드 함수를 구별한다.
+
+멤버 함수,비멤버 함수의 큰 차이점은 가상함수일수 있냐는 점.
+
+class Rational {
+public:
+  Rational(int numerator = 0, int denominator = 1);
+  int nemurator() const;
+  int denominator() const;
+private:
+  ...
+};
+
+최소한의 인터페이스는 맞지만 완전함과는 거리가 멈.
+대수 연산을 추가하고 싶지만, 멤버 or 비멤버 or 프렌드 함수중
+어떤것을 넣어야 할지 모름.
+
+객체지향이므로 멤버 함수로 일단 넣어보지만, 연산시 타입변환이 되지
+않으므로 문제 발생.
+
+class Rational {
+public:
+  ...
+  const Rational operator* (const Rational& rhs) const;
+};
+
+const 레퍼런스 인자를 얻는 이유는 항목 21-23 참조.
+
+위와 같은 문제는 혼합연산(int*Rational,Rational*int)일경우 발생.
+
+Rational oneHalf(1, 2);
+
+//동일한 함수형태로 재작성할때 명확해짐
+result = oneHalf.operator*(2); //양호
+result = 2.operator*(oneHalf); //에러
+
+2.operator*함수가 없으므로, (전역적인) 비멤버함수 operator*(int,
+Rational)를 찾지만 없기 때문에 에러 발생.
+
+oneHalf.operator*(2)는 operator*(Rational)임에도 호출이 된건
+컴파일러가 아래처럼 해석해내기 때문.
+
+const Rational temp(2); //임시객체 생성
+result = oneHalf * temp; //oneHalf.operator*(temp); 동일
+
+비명시적 생성자 일때만 가능. 명시적 생성자(explicit 키워드 사용)는 내부
+변환을 위해 이용될수 없어 에러 발생함.
+
+operator*를 비멤버 함수로 만들어 모든 인자들에 대한 내부타입변환을
+수행.
+const Rational operator*(const Rational& lhs, const Rational& rhs) {
+  return Rational(lhs.numerator() * rhs.numerator(),
+    lhs.denominator() * rhs.denominator());
+}
+
+비멤버함수가 공용인터페이스 관점에서만 제공된다면 반드시, 프렌드함수가
+반드시 될 필요는 없으며, 피해야 한다. 단, 비공용(private)에 접근해야
+할때만 프렌드 함수로 선언한다(operator>>나 operator<<등)
+
+※ 가상함수들은 멤버이야 한다
+※ operator>>, operator<<는 결코 멤버변수가 될수 없다
+※ 비멤버 함수들만 그들의 가장 왼쪽 편의 인자에서 타입변환이 일어난다.

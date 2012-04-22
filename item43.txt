@@ -1,0 +1,37 @@
+item43. 다중 계승을 바르게 사용하도록 하라.
+
+MI(Multiple Inheritance)를 사용하는 것이 단일 계승에는 없는 복잡성의
+문제를 발생시킴. 기본적으로 모호함이 생김(항목 26)
+
+상위의 클래스들(같은 멤버함수)로부터 같은 멤버함수를 재정의 하는
+방법은 간접적으로 한단계의 상위 클래스를 두는 것이다
+
+※ 순수가상함수, 단순가상함수, inline 함수(항목33)를 결합한 트릭,
+반드시 기억할 것.
+class AuxLottery: public Lottery {
+  virtual int lotteryDraw() = 0;
+  virtual int draw() {return lotteryDraw();}
+};
+
+class AuxGraphicalObject: public GraphicalObject {
+  virtual int graphicalObjectDraw() = 0;
+  virtual int draw() {return graphicalObjectDraw();}
+};
+
+class LotterySimulation: public AuxLottery, public AuxGraphicalObject
+{
+  virtual int lotteryDraw();
+  virtual int graphicalObjectDraw();  
+};
+
+LotterySimulation * pls = new LotterySimulation;
+Lottery * pl = pls;
+GraphicalObject * pgo = pls;
+
+pl->draw(); //LotterySimulation::lotteryDraw() 호출
+pgo->draw(); //LotterySimulation::graphicalObjectDraw() 호출
+
+※다중계승은 흥미롭게도 다이아몬드 계승(가장 피해야할)으로 발전하는
+경향이 있으며, 다이아몬드의 top베이스 클래스에 가상함수를 선언할 경우,
+bottom계승된 클래스의 경우는 middle베이스의 함수를 호출해야 될지
+top베이스의 가상함수를 호출해야 할지 모호해짐.

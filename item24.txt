@@ -1,0 +1,26 @@
+item24. 함수 오버로딩과 디폴트 인자값 중에서 주의깊게 선언한다.
+
+void g(int x = 0);
+g();   //g(0);
+g(10); //g(10);
+
+언제 (함수오버로딩, 디폴트인자 중에) 어떤 것이 이용될 것인가?
+1. 디폴트로 이용할 값이 있는가?
+2. 얼마나 많은 알고리즘들을 이용하기를 원하는가?
+
+디폴트값을 선택할수 있고, 한 가지의 알고리즘만을 채택하면 디폴트 인자를
+아니면 오버로딩을 이용(함수오버로딩은 알고리즘이 주어진 입력에
+의존할때도 생김.)
+
+//int의 최소값을 디폴트 인자로
+int max(int a = std::numeric_limits<int>::min());
+
+//T의 최소값을 디폴트 인자로
+template<class T>
+int max(int a = std::numeric_limits<T>::min());
+
+//numeric_limits구현체-C에서 INT_MIN을 쓰는걸 wrapping
+#include<limits.h>
+namespace std{
+  inline int numeric_limits<int>::min() throw() {return INT_MIN;}
+}

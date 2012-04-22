@@ -1,0 +1,35 @@
+item25. 포인터나 수치형 타입상의 오버로딩을 피한다
+
+void f(int x);
+void(string * ps);
+
+f(0); //f(int) 호출
+
+void * const NULL = 0;
+
+f(0); //f(int)호출
+f(NULL); //에러! 타입 비일치
+f(static_cast<string *>(NULL)); //f(string*)호출
+f(static_cast<string *>(0)); //f(string*)호출
+
+//해결가능한 C++ NULL 구현
+const class { //const객체
+public:
+  template<class T> //모든 타입T를 위해 연산자T*를 만듦
+    operator T*() const 
+    {return 0;} //각 함수는 null 포인터 반환
+    
+  template<class C, class T> //또는 null 멤버 포인트의 모든 타입으로 변환가능
+    operator T C::*() const
+    {return 0;}
+private:
+  void operator&() const; //NULL주소를 취할수 없게(항목27)
+} NULL; //이름은 NULL
+
+그러나, NULL을 구현하였다 하더라도
+f(0); 을 어떻게 할수가 없음.
+
+f(0); //f(int) 호출
+
+※오버로딩함수의 설계자는 수치와 포인터 타입의 오버로딩을 최대한 피하는
+것기 최선

@@ -1,0 +1,61 @@
+item29. 내부 데이터에 대한 “핸들”을 리턴하는 것을 피하라
+
+class String {
+public:
+  operator char *() const //String을 char*로 변환
+    {return data;}
+  ...
+private:
+  char * data;
+};
+const String B("Hello World");
+
+//임의로 변경가능한 B를 의도적으로 만듦.
+String& alsoB = const_cast<String&>(B);
+
+//의도치않게 변경되버림.
+char * str = B; //B의 char*연산자 호출
+strcpy(str, "Hi, Mom");
+
+//느리지만 안전한 구현 - 복사본을 반환
+//단점: 부른 쪽에서 delete를 호출해줘야함.
+inline String::operator char*() const {
+  char * copy = new char[strlen(data) + 1];
+  strcpy(copy, data);
+
+  return copy;
+}
+
+//빠르고 안전한 구현 - const char * 반환
+//표준 C++의 string/char* 난제에 대한 해결책
+inline String::operator const char *() const
+{return data;}
+
+※레퍼런스 또한 포인터만큼 남용되기 쉬움.
+class String{
+public:
+  char& operator[](int index) const {return data[index];}
+};
+const String cs = "AAAA";
+cs[0] = 'x'; //상수 문자열을 변경해버림.
+
+- 해결책은 포인터와 동일
+
+※비상수 멤버함수도 핸들의 유효성이 해당하는 객체가 소멸되는 것과
+일치하도록 해야함.
+
+String someStr() {
+  return "Hello";
+}
+
+const char * pc = someStr();
+cout << pc; //pc는 제거된 메모리를 가리킨다.
+
+someStr로 호출한경우 반환객체의 생명은 호출한 부분까지만(const char *
+pc = someStr())이다. 그렇기 때문 cout << pc 이전에 pc가 가리키던 객체는
+소멸되버리므로, 출력할때에는 사라져버린 메모리를 출력하게 되는 것이다.
+
+※비상수 멤버 함수의 경우 핸들을 리턴하는 것은 문제가 있다(특히
+임시객체) dangling handle을 피하려 애써야 함.
+
+

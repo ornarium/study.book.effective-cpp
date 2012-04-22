@@ -1,0 +1,62 @@
+item26. 잠재적 모호성을 경계한다
+
+class B;
+class A {
+public:
+  A(const B&); //A는 B로부터 생성가능
+};
+
+class B {
+public:
+  operator A() const; //B는 A로 변환 가능
+};
+
+void f(const A&);
+B b;
+f(b); //에러! 애매모호
+
+A가 아닌 B가 주어졌을때 A를 복사생성할것인지, B로부터 변환할것인지
+애매모호해짐. 두가지 방법은 똑같이 좋은것으로 간주되기 때문에 어느
+한가지를 선택하는것을 (컴파일러에서) 거절함.
+
+* 언어의 표준변환의 애매모호함
+void f(int);
+void f(char);
+double d = 6.02;
+f(d); //에러! 애매모호함
+
+f(static_cast<int>(d)); //양호,
+f(static_cast<char>(d)); //양호
+
+* 다중상속의 애매모호함
+class Base1 {
+public:
+  int doIt();
+};
+
+class Base2 {
+public:
+  void doIt();
+};
+
+class Derived: public Base1, public Base2 {...};
+
+Derived d;
+d.doIt(); //에러! 애매모호함
+d.Base1::doIt(); //양호, Base1::doIt호출
+d.Base2::doIt(); //양호, Base2::doIt호출
+
+문제는 접근지시자가 애매모호함을 없애는데 아무런 도움이 안됨.
+
+class Base2 {
+private:
+  void doIt();
+};
+
+class Derived: public Base1, public Base2 {...};
+
+Derived d;
+d.doIt(); //에러! 애매모호함
+
+클래스 멤버의 접근성을 바꾸는것은 프로그램의 의미를 결코 변경시키지
+말아야 함을 의미.

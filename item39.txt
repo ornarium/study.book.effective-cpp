@@ -1,0 +1,40 @@
+item39. 계층도의 아래쪽 클래스로 다운캐스트 하지 않도록 한다.
+
+class BankAccount {
+  ...
+};
+
+class SavingAccount: public BankAccount {
+  ...
+  void creditInterest(); //계좌에 이자를 추가함
+};
+
+list<BankAccount*>::iterator p = allAccounts.begin();
+(*p)->creditInterest(); //에러발생.creditInterest는 SavingAccount에만 있음
+
+list<BankAccount*>::iterator p = allAccounts.begin();
+static_cast<SavingAccount *>(*p)->creditInterest(); //양호, 그러나
+또다른 class가 추가된다면??
+
+C++프로그래머에게 타입 변환은 이브의 사과에 해당.
+만약, CheckingAccount라는 계좌가 추가된다면?? 결국 C++에서 해결방법은
+가상함수밖에 없음.
+
+※ 가상함수 구현시 BankAccount::creditInterest는 기본적으로 빈 구현을
+제공하는데, 내부적으로 문제점이 있다(항목 36참고 - 책의 Airplane Model
+설계 내용을 참고할 것.)
+
+※ 만약, 가상함수를 정의하는 것이 권한 밖이라서, 다운 캐스팅밖에 방법이
+없을때, (안전한 다운캐스팅)dynamic_cast을 사용한다.
+
+dynamic_cast는 타입 변환이 시도되고, 성공시 새로운 포인터에 대한 유효
+포인터를 되돌려 준다(실패시 NULL)
+
+if(SavingAccount * psa = dynamic_cast<SavingAccount*>(*p)) {
+  psa->creditInterest();
+} else if(CheckingAccount * pca = dynamic_cast<CheckingAccount*>(*p))
+  {
+   pca->creditInterest();
+} else {
+  error("Unknown account type!");
+}

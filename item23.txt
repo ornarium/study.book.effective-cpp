@@ -1,0 +1,42 @@
+item23. 객체 반환시 레퍼런스를 반환하지 않는다.
+
+레퍼런스 전달의 효율성(항목22)을 철저히 추구한 나머지 존재하지 않는
+객체의 레퍼런스를 전달하는 치명적인 오류를 범하기 시작한다.
+
+//에러1 - 스택에 할당
+inline const Rational& operator* (const Rational& lhs, const Rational&
+rhs) {
+  Rational result(lhs.n * rhs.n, lhs.d * rhs.d);
+  return result;
+}
+- 로컬 객체의 레퍼런스를 반환하는 심각한 문제(항목31)
+
+//에러2 - 힙에 할당
+inline const Rational& operator* (const Rational& lhs, const Rational&
+rhs) {
+  Rational * result = new Rational(lhs.n * rhs.n, lhs.d * rhs.d);
+  return *result;
+}
+- w = x * y * z; 같은 식에서 메모리 릭 발생.
+
+//에러3 - 정적 객체로 선언
+inline const Rational& operator* (const Rational& lhs, const Rational&
+rhs) {
+  static Rational result;
+  //값 집어넣음
+  return result;
+}
+
+- if((a * b) == (c * d)) {...} 는 항상 참이 되어버림(같은 정적객체를
+  반환하므로)
+
+//해결책
+inline const Rational operator*(const Rational& lhs, const Rational&
+rhs) {
+  return Rational(lhs.n * rhs.n, lhs.d * rhs.d);
+}
+- 생성자(복사), 소멸자 호출등의 비용이 들지만, 장기적인 안목으로는
+확실한 해결책
+
+※  레퍼런스 반환과 객체 반환 중 결정하기 위한 방법은, 올바르게
+수행되는 것을 선택하는 것.
